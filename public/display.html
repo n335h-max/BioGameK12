@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🧬 BioGame – Host Display</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --surface: #111827;
+      --border: #1e2d4a;
+      --accent: #3b82f6;
+      --green: #22c55e;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --purple: #a855f7;
+      --text: #f0f4ff;
+      --muted: #6b7280;
+      --opt-a: #3b82f6;
+      --opt-b: #a855f7;
+      --opt-c: #f59e0b;
+      --opt-d: #ec4899;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── TOP BAR ── */
+    #topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      gap: 16px;
+      flex-shrink: 0;
+    }
+    #topbar .logo { font-size: 1.4rem; font-weight: 900; letter-spacing: 1px; }
+    #topbar .logo span { color: var(--accent); }
+
+    /* Health bar */
+    #health-wrap { display: flex; align-items: center; gap: 10px; flex: 1; max-width: 400px; }
+    #health-label { font-weight: 700; font-size: 0.9rem; white-space: nowrap; }
+    #health-track {
+      flex: 1; height: 22px; background: #1f2937; border-radius: 99px;
+      overflow: hidden; border: 1px solid var(--border);
+    }
+    #health-fill {
+      height: 100%; border-radius: 99px;
+      background: linear-gradient(90deg, #22c55e, #86efac);
+      transition: width 0.8s cubic-bezier(.4,0,.2,1), background 0.4s;
+    }
+    #health-val { font-weight: 700; font-size: 0.95rem; min-width: 40px; }
+
+    /* Score */
+    #score-wrap { display: flex; gap: 16px; font-size: 0.9rem; }
+    .score-badge { padding: 4px 14px; border-radius: 99px; font-weight: 700; }
+    .score-badge.ok { background: rgba(34,197,94,.15); color: var(--green); border: 1px solid var(--green); }
+    .score-badge.err { background: rgba(239,68,68,.15); color: var(--red); border: 1px solid var(--red); }
+
+    /* Q counter */
+    #qnum { font-size: 0.9rem; color: var(--muted); white-space: nowrap; }
+
+    /* ── MAIN AREA ── */
+    #main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 0;
+      overflow: hidden;
+    }
+
+    /* ── BABY SIDEBAR ── */
+    #baby-col {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 12px;
+      gap: 12px;
+    }
+    #baby-img {
+      width: 160px; height: 160px; object-fit: contain;
+      transition: opacity 0.6s, transform 0.6s;
+      filter: drop-shadow(0 0 24px #3b82f680);
+    }
+    #stage-label {
+      font-size: 0.85rem; font-weight: 700; text-align: center;
+      color: var(--accent); letter-spacing: 0.5px;
+    }
+    #groups-voted {
+      font-size: 0.8rem; color: var(--muted); text-align: center;
+    }
+
+    /* Vote dots */
+    #vote-dots {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      width: 100%;
+    }
+    .dot {
+      aspect-ratio: 1;
+      border-radius: 8px;
+      background: #1f2937;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--muted);
+      transition: background 0.3s, border-color 0.3s, color 0.3s;
+    }
+    .dot.voted { color: var(--text); }
+    .dot.voted-A { background: rgba(59,130,246,.3);  border-color: var(--opt-a); }
+    .dot.voted-B { background: rgba(168,85,247,.3);  border-color: var(--opt-b); }
+    .dot.voted-C { background: rgba(245,158,11,.3);  border-color: var(--opt-c); }
+    .dot.voted-D { background: rgba(236,72,153,.3);  border-color: var(--opt-d); }
+
+    /* ── QUESTION AREA ── */
+    #q-col {
+      display: flex;
+      flex-direction: column;
+      padding: 20px 28px 16px;
+      gap: 14px;
+      overflow: hidden;
+    }
+    #milestone-tag {
+      font-size: 0.8rem; font-weight: 700;
+      color: var(--purple);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    #question-text {
+      font-size: 1.45rem;
+      font-weight: 700;
+      line-height: 1.4;
+      flex-shrink: 0;
+    }
+    #options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      flex: 1;
+    }
+    .option {
+      border-radius: 14px;
+      border: 2px solid;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+      position: relative;
+      overflow: hidden;
+      cursor: default;
+    }
+    .option.A { border-color: var(--opt-a); }
+    .option.B { border-color: var(--opt-b); }
+    .option.C { border-color: var(--opt-c); }
+    .option.D { border-color: var(--opt-d); }
+    .option .badge {
+      width: 38px; height: 38px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; font-weight: 900; flex-shrink: 0;
+    }
+    .option.A .badge { background: rgba(59,130,246,.2); color: var(--opt-a); }
+    .option.B .badge { background: rgba(168,85,247,.2); color: var(--opt-b); }
+    .option.C .badge { background: rgba(245,158,11,.2); color: var(--opt-c); }
+    .option.D .badge { background: rgba(236,72,153,.2); color: var(--opt-d); }
+    .option .opt-text { font-size: 1rem; font-weight: 600; line-height: 1.3; }
+    .option .vote-bar {
+      position: absolute; bottom: 0; left: 0; height: 4px;
+      border-radius: 0 0 12px 12px;
+      transition: width 0.5s ease, background 0.3s;
+    }
+    .option.A .vote-bar { background: var(--opt-a); }
+    .option.B .vote-bar { background: var(--opt-b); }
+    .option.C .vote-bar { background: var(--opt-c); }
+    .option.D .vote-bar { background: var(--opt-d); }
+    .option .vote-count {
+      position: absolute; right: 12px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.4rem; font-weight: 900;
+      opacity: 0.25; transition: opacity 0.3s;
+    }
+    .option.has-votes .vote-count { opacity: 1; }
+
+    /* Revealed states */
+    .option.correct-ans {
+      background: rgba(34,197,94,.15);
+      border-color: var(--green) !important;
+      box-shadow: 0 0 24px rgba(34,197,94,.3);
+      animation: pulse-green 0.6s ease;
+    }
+    .option.majority-wrong {
+      background: rgba(239,68,68,.1);
+      border-color: var(--red) !important;
+    }
+    .option.majority-correct {
+      background: rgba(34,197,94,.15);
+      border-color: var(--green) !important;
+      box-shadow: 0 0 24px rgba(34,197,94,.3);
+    }
+    @keyframes pulse-green {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+
+    /* ── BOTTOM CONTROLS BAR ── */
+    #controls {
+      padding: 10px 28px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .btn {
+      padding: 9px 22px;
+      border-radius: 10px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
+      letter-spacing: 0.3px;
+    }
+    .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,.4); }
+    .btn:active:not(:disabled) { transform: translateY(0); }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn.primary { background: linear-gradient(135deg, #3b82f6, #6366f1); color: #fff; }
+    .btn.danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; }
+    .btn.success { background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; }
+    .btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    #shortcut-hint { margin-left: auto; font-size: 0.75rem; color: var(--muted); }
+
+    /* Health delta flash */
+    #health-delta {
+      font-size: 1.4rem; font-weight: 900;
+      position: absolute; top: 10px; right: 28px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    #health-delta.show { opacity: 1; animation: floatup 1.5s ease forwards; }
+    #health-delta.pos { color: var(--green); }
+    #health-delta.neg { color: var(--red); }
+    @keyframes floatup {
+      0% { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(-40px); opacity: 0; }
+    }
+
+    /* ── OVERLAY SCREENS ── */
+    .overlay {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 24px; z-index: 50; text-align: center;
+      padding: 40px;
+    }
+    #lobby-screen {
+      background: radial-gradient(ellipse at 50% 40%, #0f1d3a 0%, #0a0e1a 100%);
+    }
+    #lobby-screen h1 { font-size: 3.5rem; font-weight: 900; letter-spacing: 2px; }
+    #lobby-screen h1 span { color: var(--accent); }
+    #lobby-screen p { font-size: 1.1rem; color: var(--muted); max-width: 500px; line-height: 1.6; }
+    #lobby-screen .url-hint {
+      background: var(--surface); border: 1px solid var(--border);
+      padding: 12px 28px; border-radius: 12px;
+      font-size: 1.2rem; font-weight: 700; color: var(--accent);
+      letter-spacing: 1px;
+    }
+
+    #milestone-screen {
+      background: radial-gradient(ellipse at 50% 40%, #14103a 0%, #0a0e1a 100%);
+      display: none;
+    }
+    #milestone-screen h2 { font-size: 2.8rem; font-weight: 900; color: var(--yellow); }
+    #milestone-screen .m-img { width: 200px; height: 200px; object-fit: contain; filter: drop-shadow(0 0 40px #f59e0b80); animation: floatbounce 2s ease-in-out infinite; }
+    @keyframes floatbounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+    #milestone-screen p { font-size: 1.2rem; color: #c4b5fd; max-width: 500px; }
+    #milestone-screen .m-stage { font-size: 1rem; color: var(--purple); font-weight: 700; }
+
+    #gameover-screen {
+      background: radial-gradient(ellipse at 50% 40%, #0f2a1b 0%, #0a0e1a 100%);
+      display: none;
+    }
+    #gameover-screen h2 { font-size: 3rem; font-weight: 900; color: var(--green); }
+    #gameover-screen .go-img { width: 220px; height: 220px; object-fit: contain; filter: drop-shadow(0 0 40px #22c55e80); animation: floatbounce 2s ease-in-out infinite; }
+    #gameover-screen p { font-size: 1.1rem; color: var(--muted); }
+    .final-scores { display: flex; gap: 20px; }
+    .fs-badge { padding: 16px 28px; border-radius: 14px; font-weight: 900; font-size: 1.4rem; text-align: center; }
+    .fs-badge small { display: block; font-size: 0.75rem; font-weight: 400; color: var(--muted); }
+    .fs-badge.ok { background: rgba(34,197,94,.15); color: var(--green); border: 1px solid var(--green); }
+    .fs-badge.err { background: rgba(239,68,68,.15); color: var(--red); border: 1px solid var(--red); }
+    .fs-badge.hp { background: rgba(59,130,246,.15); color: var(--accent); border: 1px solid var(--accent); }
+
+    /* Confetti canvas */
+    #confetti-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 100; }
+
+    /* ── TIMER RING ── */
+    #timer-ring-wrap {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 4px; flex-shrink: 0;
+    }
+    #timer-ring-wrap svg { transform: rotate(-90deg); }
+    #timer-circle-bg  { fill: none; stroke: #1f2937; stroke-width: 5; }
+    #timer-circle-fg  {
+      fill: none; stroke: var(--accent); stroke-width: 5;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.95s linear, stroke 0.3s;
+    }
+    #timer-ring-wrap.danger #timer-circle-fg { stroke: var(--red); }
+    #timer-ring-wrap.danger { animation: ring-pulse 0.5s ease-in-out infinite alternate; }
+    @keyframes ring-pulse {
+      from { filter: drop-shadow(0 0 0px #ef4444); }
+      to   { filter: drop-shadow(0 0 10px #ef4444cc); }
+    }
+    #timer-num {
+      position: absolute; font-size: 1rem; font-weight: 900;
+      color: var(--text); pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div class="logo">🧬 <span>Bio</span>Game</div>
+
+  <div id="health-wrap">
+    <span id="health-label">❤️ HEALTH</span>
+    <div id="health-track"><div id="health-fill" style="width:100%"></div></div>
+    <span id="health-val">100</span>
+  </div>
+
+  <!-- Timer ring -->
+  <div id="timer-ring-wrap" style="position:relative;width:52px;height:52px;">
+    <svg width="52" height="52" viewBox="0 0 52 52">
+      <circle class="" id="timer-circle-bg" cx="26" cy="26" r="22"/>
+      <circle id="timer-circle-fg" cx="26" cy="26" r="22"
+        stroke-dasharray="138.2" stroke-dashoffset="0"/>
+    </svg>
+    <span id="timer-num" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)">10</span>
+  </div>
+
+  <div id="score-wrap">
+    <span class="score-badge ok">✅ <span id="score-correct">0</span></span>
+    <span class="score-badge err">❌ <span id="score-wrong">0</span></span>
+  </div>
+
+  <div id="qnum">Q <span id="q-cur">0</span> / <span id="q-tot">20</span></div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- Baby sidebar -->
+  <div id="baby-col">
+    <img id="baby-img" src="img/stage0.png" alt="Development Stage"/>
+    <div id="stage-label">Stage 0 – Sperm</div>
+    <div id="groups-voted">Groups voted: <span id="gv-count">0</span> / 6</div>
+    <div id="vote-dots">
+      <div class="dot" id="dot-1" data-g="1">G1</div>
+      <div class="dot" id="dot-2" data-g="2">G2</div>
+      <div class="dot" id="dot-3" data-g="3">G3</div>
+      <div class="dot" id="dot-4" data-g="4">G4</div>
+      <div class="dot" id="dot-5" data-g="5">G5</div>
+      <div class="dot" id="dot-6" data-g="6">G6</div>
+    </div>
+  </div>
+
+  <!-- Question & options -->
+  <div id="q-col" style="position:relative">
+    <div id="milestone-tag"></div>
+    <div id="question-text">Waiting for host to start…</div>
+    <div id="options-grid">
+      <div class="option A" id="opt-A">
+        <div class="badge">A</div>
+        <div class="opt-text" id="txt-A"></div>
+        <div class="vote-count" id="vc-A">0</div>
+        <div class="vote-bar" id="vb-A" style="width:0%"></div>
+      </div>
+      <div class="option B" id="opt-B">
+        <div class="badge">B</div>
+        <div class="opt-text" id="txt-B"></div>
+        <div class="vote-count" id="vc-B">0</div>
+        <div class="vote-bar" id="vb-B" style="width:0%"></div>
+      </div>
+      <div class="option C" id="opt-C">
+        <div class="badge">C</div>
+        <div class="opt-text" id="txt-C"></div>
+        <div class="vote-count" id="vc-C">0</div>
+        <div class="vote-bar" id="vb-C" style="width:0%"></div>
+      </div>
+      <div class="option D" id="opt-D">
+        <div class="badge">D</div>
+        <div class="opt-text" id="txt-D"></div>
+        <div class="vote-count" id="vc-D">0</div>
+        <div class="vote-bar" id="vb-D" style="width:0%"></div>
+      </div>
+    </div>
+    <div id="health-delta"></div>
+  </div>
+</div>
+
+<!-- CONTROLS -->
+<div id="controls">
+  <button class="btn primary" id="btn-start" onclick="hostStart()">▶ Start Game</button>
+  <button class="btn danger" id="btn-reveal" onclick="hostReveal()" disabled>🔍 Reveal Answer <small style="font-weight:400;font-size:0.75rem"> [Space]</small></button>
+  <button class="btn success" id="btn-next" onclick="hostNext()" disabled>➡ Next Question <small style="font-weight:400;font-size:0.75rem"> [→]</small></button>
+  <button class="btn ghost" id="btn-reset" onclick="hostReset()">↺ Reset</button>
+  <span id="shortcut-hint">URL for groups: <strong>http://&lt;your-ip&gt;:3000/vote.html</strong></span>
+</div>
+
+<!-- OVERLAYS -->
+<div class="overlay" id="lobby-screen">
+  <h1>🧬 <span>Bio</span>Game</h1>
+  <p>A real-time classroom biology quiz.<br/>Groups join on their phones, then vote A/B/C/D together!</p>
+  <div class="url-hint">Groups open: <strong>http://[your-ip]:3000/vote.html</strong></div>
+  <button class="btn primary" style="font-size:1.1rem;padding:14px 40px" onclick="hostStart()">▶ Start Game</button>
+</div>
+
+<div class="overlay" id="milestone-screen">
+  <div class="m-stage" id="ms-subtitle"></div>
+  <h2 id="ms-title">🎉 Milestone Reached!</h2>
+  <img class="m-img" id="ms-img" src="img/stage1.png" alt="New Stage"/>
+  <p id="ms-desc">The baby has evolved to the next stage!</p>
+  <button class="btn success" style="font-size:1.1rem;padding:14px 40px" onclick="hostMilestoneContinue()">Continue →</button>
+</div>
+
+<div class="overlay" id="gameover-screen">
+  <h2>🎊 Baby Delivered! Game Over!</h2>
+  <img class="go-img" src="img/stage4.png" alt="Baby"/>
+  <div class="final-scores">
+    <div class="fs-badge ok"><span id="go-correct">0</span><small>Correct</small></div>
+    <div class="fs-badge err"><span id="go-wrong">0</span><small>Wrong</small></div>
+    <div class="fs-badge hp"><span id="go-hp">100</span><small>Final HP</small></div>
+  </div>
+  <p id="go-msg"></p>
+  <button class="btn ghost" onclick="hostReset()" style="margin-top:8px">↺ Play Again</button>
+</div>
+
+<canvas id="confetti-canvas"></canvas>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+
+const STAGE_NAMES = ['Stage 0 – Sperm','Stage 1 – Zygote','Stage 2 – Morula / Blastocyst','Stage 3 – Gastrula / Fetus','Stage 4 – Baby! 🎉'];
+const STAGE_IMGS  = ['img/stage0.png','img/stage1.png','img/stage2.png','img/stage3.png','img/stage4.png'];
+const MILESTONE_DESCS = [
+  '',
+  'The sperm has fertilized the egg! A new life begins.',
+  'Rapid cleavage complete — say hello to the Blastocyst!',
+  'Gastrulation done — three germ layers are forming organs!',
+  'Organs developed, all trimesters complete — baby is here!'
+];
+
+let lastStage = 0;
+
+socket.on('state:update', (s) => {
+  updateUI(s);
+});
+
+// ── Timer ring ──
+const TIMER_MAX = 10;
+const CIRCUM = 2 * Math.PI * 22; // 138.23
+const timerWrap   = document.getElementById('timer-ring-wrap');
+const timerFg     = document.getElementById('timer-circle-fg');
+const timerNum    = document.getElementById('timer-num');
+
+function setTimerRing(secs) {
+  const s = Math.max(0, secs);
+  const fraction = s / TIMER_MAX;
+  timerFg.style.strokeDashoffset = CIRCUM * (1 - fraction);
+  timerNum.textContent = s;
+  if (s <= 3 && s > 0) {
+    timerWrap.classList.add('danger');
+    timerFg.style.stroke = 'var(--red)';
+  } else {
+    timerWrap.classList.remove('danger');
+    timerFg.style.stroke = '';
+  }
+  timerWrap.style.opacity = (s === 0) ? '0.2' : '1';
+}
+
+socket.on('timer:tick', ({ seconds }) => {
+  setTimerRing(seconds);
+});
+
+function updateUI(s) {
+  // Overlays
+  document.getElementById('lobby-screen').style.display   = s.phase === 'lobby' ? 'flex' : 'none';
+  document.getElementById('milestone-screen').style.display = s.phase === 'milestone' ? 'flex' : 'none';
+  document.getElementById('gameover-screen').style.display  = s.phase === 'gameover' ? 'flex' : 'none';
+
+  // Health bar
+  const pct = Math.max(0, Math.min(100, s.health));
+  document.getElementById('health-fill').style.width = pct + '%';
+  document.getElementById('health-val').textContent = s.health;
+  document.getElementById('health-fill').style.background =
+    s.health > 60 ? 'linear-gradient(90deg,#22c55e,#86efac)' :
+    s.health > 30 ? 'linear-gradient(90deg,#f59e0b,#fcd34d)' :
+                    'linear-gradient(90deg,#ef4444,#fca5a5)';
+
+  // Score
+  document.getElementById('score-correct').textContent = s.score.correct;
+  document.getElementById('score-wrong').textContent   = s.score.wrong;
+  document.getElementById('q-cur').textContent = s.questionIndex + (s.phase === 'question' || s.phase === 'revealed' ? 1 : 0);
+  document.getElementById('q-tot').textContent = s.totalQuestions;
+
+  // Baby
+  if (s.stage !== lastStage) {
+    const img = document.getElementById('baby-img');
+    img.style.opacity = 0;
+    setTimeout(() => { img.src = STAGE_IMGS[s.stage]; img.style.opacity = 1; }, 300);
+    lastStage = s.stage;
+  }
+  document.getElementById('stage-label').textContent = STAGE_NAMES[s.stage] || '';
+
+  // Vote dots — show each group's actual chosen option in its colour
+  const gv = s.groupVotes || {};
+  for (let g = 1; g <= 6; g++) {
+    const dot = document.getElementById('dot-' + g);
+    const ans = gv[String(g)];
+    dot.classList.remove('voted','voted-A','voted-B','voted-C','voted-D');
+    if (ans) {
+      dot.classList.add('voted', 'voted-' + ans);
+      dot.textContent = 'G' + g + '→' + ans;
+    } else {
+      dot.textContent = 'G' + g;
+    }
+  }
+  document.getElementById('gv-count').textContent = s.groupsVoted;
+
+  // Question & options
+  if (s.question) {
+    document.getElementById('milestone-tag').textContent = s.question.milestoneLabel || '';
+    document.getElementById('question-text').textContent = s.question.text;
+    ['A','B','C','D'].forEach(opt => {
+      document.getElementById('txt-' + opt).textContent = s.question.options[opt];
+      const count = s.voteCount[opt] || 0;
+      const total = Math.max(1, s.groupsVoted);
+      const pct = s.groupsVoted > 0 ? Math.round((count / total) * 100) : 0;
+      document.getElementById('vc-' + opt).textContent = count;
+      document.getElementById('vb-' + opt).style.width = pct + '%';
+      const el = document.getElementById('opt-' + opt);
+      el.classList.toggle('has-votes', count > 0);
+      // Revealed state
+      el.classList.remove('correct-ans','majority-wrong','majority-correct');
+      if (s.phase === 'revealed' || s.phase === 'milestone' || s.phase === 'gameover') {
+        if (opt === s.correctAnswer) el.classList.add('correct-ans');
+        else if (opt === s.majorityAnswer && s.majorityAnswer !== s.correctAnswer) el.classList.add('majority-wrong');
+      }
+    });
+  }
+
+  // Health delta
+  if (s.healthDelta && s.phase === 'revealed') {
+    const el = document.getElementById('health-delta');
+    el.textContent = s.healthDelta > 0 ? '+' + s.healthDelta + ' HP' : s.healthDelta + ' HP';
+    el.className = 'show ' + (s.healthDelta > 0 ? 'pos' : 'neg');
+    setTimeout(() => el.className = '', 1600);
+  }
+
+  // Milestone screen
+  if (s.phase === 'milestone') {
+    document.getElementById('ms-title').textContent = '🎉 Milestone ' + s.milestonesCompleted + ' Reached!';
+    document.getElementById('ms-subtitle').textContent = STAGE_NAMES[s.stage];
+    document.getElementById('ms-img').src = STAGE_IMGS[s.stage];
+    document.getElementById('ms-desc').textContent = MILESTONE_DESCS[s.milestonesCompleted] || 'The baby grows stronger!';
+    launchConfetti();
+  }
+
+  // Gameover screen
+  if (s.phase === 'gameover') {
+    document.getElementById('go-correct').textContent = s.score.correct;
+    document.getElementById('go-wrong').textContent   = s.score.wrong;
+    document.getElementById('go-hp').textContent      = s.health;
+    const msg = s.health >= 70 ? '🏆 Excellent! The class aced it! Healthy baby delivered!' :
+                s.health >= 40 ? '👍 Good job! A healthy baby is born!' :
+                                 '😅 The baby made it… barely. Study more next time!';
+    document.getElementById('go-msg').textContent = msg;
+    launchConfetti();
+  }
+
+  // Buttons
+  document.getElementById('btn-start').style.display  = s.phase === 'lobby' ? 'inline-block' : 'none';
+  document.getElementById('btn-reveal').disabled = s.phase !== 'question';
+  document.getElementById('btn-next').disabled   = s.phase !== 'revealed';
+}
+
+function hostStart()           { socket.emit('host:start'); }
+function hostReveal()          { socket.emit('host:reveal'); }
+function hostNext()            { socket.emit('host:next'); }
+function hostReset()           { socket.emit('host:reset'); }
+function hostMilestoneContinue(){ socket.emit('host:milestone:continue'); }
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.key === ' ' || e.code === 'Space') { e.preventDefault(); socket.emit('host:reveal'); }
+  if (e.key === 'ArrowRight')              { socket.emit('host:next'); }
+  if (e.key === 'Enter')                   { socket.emit('host:milestone:continue'); }
+});
+
+// ── Confetti ──
+function launchConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const pieces = Array.from({length:120}, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * -canvas.height,
+    w: 8 + Math.random() * 10,
+    h: 4 + Math.random() * 6,
+    color: ['#3b82f6','#a855f7','#22c55e','#f59e0b','#ec4899'][Math.floor(Math.random()*5)],
+    speed: 2 + Math.random() * 4,
+    drift: (Math.random() - 0.5) * 2,
+    rot: Math.random() * 360,
+    rspeed: (Math.random() - 0.5) * 6,
+  }));
+  let frame;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pieces.forEach(p => {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+      p.y += p.speed; p.x += p.drift; p.rot += p.rspeed;
+    });
+    if (pieces.some(p => p.y < canvas.height + 20)) frame = requestAnimationFrame(draw);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  cancelAnimationFrame(frame);
+  draw();
+  setTimeout(() => { cancelAnimationFrame(frame); ctx.clearRect(0,0,canvas.width,canvas.height); }, 4000);
+}
+</script>
+</body>
+</html>
