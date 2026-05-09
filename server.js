@@ -14,7 +14,7 @@ const io = new Server(server, {
 });
 
 const PORT = process.env.PORT || 3001;
-const TOTAL_GROUPS = 6;
+const TOTAL_GROUPS = 9;
 const QUESTION_TIME = 10; // seconds per question
 
 let questionTimer = null;

@@ -392,7 +392,7 @@
   <div id="baby-col">
     <img id="baby-img" src="img/stage0.png" alt="Development Stage"/>
     <div id="stage-label">Stage 0 – Sperm</div>
-    <div id="groups-voted">Groups voted: <span id="gv-count">0</span> / 6</div>
+    <div id="groups-voted">Groups voted: <span id="gv-count">0</span> / 9</div>
     <div id="vote-dots">
       <div class="dot" id="dot-1" data-g="1">G1</div>
       <div class="dot" id="dot-2" data-g="2">G2</div>
@@ -400,6 +400,9 @@
       <div class="dot" id="dot-4" data-g="4">G4</div>
       <div class="dot" id="dot-5" data-g="5">G5</div>
       <div class="dot" id="dot-6" data-g="6">G6</div>
+      <div class="dot" id="dot-7" data-g="7">G7</div>
+      <div class="dot" id="dot-8" data-g="8">G8</div>
+      <div class="dot" id="dot-9" data-g="9">G9</div>
     </div>
   </div>
 
@@ -554,7 +557,7 @@ function updateUI(s) {
 
   // Vote dots — show each group's actual chosen option in its colour
   const gv = s.groupVotes || {};
-  for (let g = 1; g <= 6; g++) {
+  for (let g = 1; g <= 9; g++) {
     const dot = document.getElementById('dot-' + g);
     const ans = gv[String(g)];
     dot.classList.remove('voted','voted-A','voted-B','voted-C','voted-D');
