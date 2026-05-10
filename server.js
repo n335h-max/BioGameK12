@@ -53,8 +53,8 @@ function startQuestionTimer() {
 }
 
 // ── Milestone break points: milestone screen shown AFTER these question indices ─
-// 3 | 2 | 3 | 2  questions per milestone  →  breaks at Q3, Q5, Q8, Q10
-const MILESTONE_BREAKS = [3, 5, 8, 10];
+// 2 | 3 | 3 | 2  questions per milestone  →  breaks at Q2, Q5, Q8, Q10
+const MILESTONE_BREAKS = [2, 5, 8, 10];
 
 // ── Initial game state ────────────────────────────────────────────────────────
 function freshState() {
