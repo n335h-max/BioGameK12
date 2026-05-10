@@ -401,7 +401,7 @@ socket.on('state:update', (s) => {
   const questionChanged = s.questionIndex !== currentQIndex;
 
   // Reset vote on new question
-  if (questionChanged && s.phase === 'question') {
+  if (questionChanged) {
     myVote = null;
   }
   currentPhase  = s.phase;
